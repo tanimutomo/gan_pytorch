@@ -1,0 +1,1 @@
+import torch# loss ---------------------------------------------------------def loss_G(output_f, batch_size):    loss = torch.sum(torch.log(output_f))    loss = - loss / batch_size    return lossdef loss_D(output_r, output_f, batch_size):    loss = torch.sum(torch.log(output_r) + torch.log(1 - output_f))    loss = - loss / batch_size    return loss
