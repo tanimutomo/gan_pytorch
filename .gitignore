@@ -106,4 +106,4 @@ venv.bak/
 # me
 gen_img
 .DS_Store
-/model_save/*
+/weights/*
