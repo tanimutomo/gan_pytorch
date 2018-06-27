@@ -1,3 +1,3 @@
 from .loss_gan import *
 from .loss_wgan import *
-from .data import *
+from .mnist_data import *
