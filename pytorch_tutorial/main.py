@@ -9,7 +9,7 @@ import torch.optim as optim
 from model import Generator, Discriminator
 from utils import weights_init
 from dataset import get_loader
-from train import train
+from train import train, visualize
 
 
 # Set random seem for reproducibility
@@ -20,7 +20,7 @@ random.seed(manualSeed)
 torch.manual_seed(manualSeed)
 
 # Root directory for dataset
-dataroot = "/Users/tanimu/Project/data/celeba"
+dataroot = "./data/celeba"
 
 # Number of workers for dataloader
 workers = 2
@@ -100,4 +100,4 @@ optimizerG = optim.Adam(netG.parameters(), lr=lr, betas=(beta1, 0.999))
 dataloader = get_loader(dataroot, image_size, batch_size, workers)
 G_losses, D_losses, img_list = train(num_epochs, dataloader, netG, netD, real_label, fake_label,
     optimizerG, optimizerD, criterion, device, fixed_noise, nz)
-visualize(G_losses, D_losses, img_list, dataloader)
+visualize(G_losses, D_losses, img_list, dataloader, device)

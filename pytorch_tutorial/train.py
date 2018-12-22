@@ -1,5 +1,7 @@
 import torch
 import torchvision.utils as vutils
+import matplotlib.pyplot as plt
+import numpy as np
 
 # Training Loop
 
@@ -87,7 +89,7 @@ def train(num_epochs, dataloader, netG, netD, real_label, fake_label,
 
     return G_losses, D_losses, img_list
 
-def visualize(G_losses, D_losses, img_list, dataloader):
+def visualize(G_losses, D_losses, img_list, dataloader, device):
     plt.figure(figsize=(10,5))
     plt.title("Generator and Discriminator Loss During Training")
     plt.plot(G_losses,label="G")
