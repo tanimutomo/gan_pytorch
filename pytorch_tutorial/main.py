@@ -10,6 +10,7 @@ from model import Generator, Discriminator
 from utils import weights_init
 from dataset import get_loader
 from train import train, visualize
+from train_d import train, visualize
 
 
 # Set random seem for reproducibility
@@ -19,43 +20,46 @@ print("Random Seed: ", manualSeed)
 random.seed(manualSeed)
 torch.manual_seed(manualSeed)
 
-# Root directory for dataset
-dataroot = "./data/celeba"
+config = {
+    # Root directory for dataset
+    'dataroot': "./data/celeba",
+    
+    # Number of workers for dataloader
+    'workers': 2,
+    
+    # Batch size during training
+    'batch_size': 128,
+    
+    # Spatial size of training images. All images will be resized to this
+    #   size using a transformer.
+    'image_size': 64,
+    
+    # Number of channels in the training images. For color images this is 3
+    'nc': 3,
+    
+    # Size of z latent vector (i.e. size of generator input)
+    'nz': 100,
+    
+    # Size of feature maps in generator
+    'ngf': 64,
+    
+    # Size of feature maps in discriminator
+    'ndf': 64,
+    
+    # Number of training epochs
+    'num_epochs': 5,
+    
+    # Learning rate for optimizers
+    'lr': 0.0002,
+    
+    # Beta1 hyperparam for Adam optimizers
+    'beta1': 0.5,
+    
+    # Number of GPUs available. Use 0 for CPU mode.
+    'ngpu': 1
 
-# Number of workers for dataloader
-workers = 2
-
-# Batch size during training
-batch_size = 128
-
-# Spatial size of training images. All images will be resized to this
-#   size using a transformer.
-image_size = 64
-
-# Number of channels in the training images. For color images this is 3
-nc = 3
-
-# Size of z latent vector (i.e. size of generator input)
-nz = 100
-
-# Size of feature maps in generator
-ngf = 64
-
-# Size of feature maps in discriminator
-ndf = 64
-
-# Number of training epochs
-num_epochs = 5
-
-# Learning rate for optimizers
-lr = 0.0002
-
-# Beta1 hyperparam for Adam optimizers
-beta1 = 0.5
-
-# Number of GPUs available. Use 0 for CPU mode.
-ngpu = 1
-
+    }
+    
 # Decide which device we want to run on
 device = torch.device("cuda:0" if (torch.cuda.is_available() and ngpu > 0) else "cpu")
 
@@ -69,6 +73,8 @@ if (device.type == 'cuda') and (ngpu > 1):
 # Apply the weights_init function to randomly initialize all weights
 #  to mean=0, stdev=0.2.
 netG.apply(weights_init)
+# netG.load_state_dict(torch.load('./models/netG.pth'))
+# netG.eval()
 
 # Create the Discriminator
 netD = Discriminator(ngpu, nz, ndf, nc).to(device)

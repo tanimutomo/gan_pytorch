@@ -103,3 +103,9 @@ venv.bak/
 # mypy
 .mypy_cache/
 
+# me
+gen_img
+.DS_Store
+/weights/
+/images/
+rsync.sh
