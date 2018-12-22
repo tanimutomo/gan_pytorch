@@ -87,6 +87,9 @@ def train(num_epochs, dataloader, netG, netD, real_label, fake_label,
 
             iters += 1
 
+    torch.save(netG.state_dict(), 'models/netG.pth')
+    torch.save(netD.state_dict(), 'models/netD.pth')
+
     return G_losses, D_losses, img_list
 
 def visualize(G_losses, D_losses, img_list, dataloader, device):
