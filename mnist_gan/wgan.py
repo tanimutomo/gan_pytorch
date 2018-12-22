@@ -13,6 +13,10 @@ parser = argparse.ArgumentParser(description='Model and Parameters for GAN Train
 parser.add_argument('--cuda', type=int, default=0)
 parser.add_argument('--img_dir', type=int, required=True)
 parser.add_argument('--epoch', type=int, default=100)
+parser.add_argument('--batch_size', type=int, default=64)
+parser.add_argument('--lr', type=float, default=1e-5)
+parser.add_argument('--d_train', type=int, default=5)
+parser.add_argument('--g_start', type=int, default=0)
 args = parser.parse_args()
 
 # cuda ---------------------------------------------------------
@@ -104,15 +108,15 @@ class Generator(nn.Module):
 
         preprocess = nn.Sequential(
             nn.Linear(128, 4*4*4*DIM),
-            nn.ReLU(True),
+            nn.LeakyReLU(True),
         )
         block1 = nn.Sequential(
             nn.ConvTranspose2d(4*DIM, 2*DIM, 5),
-            nn.ReLU(True),
+            nn.LeakyReLU(True),
         )
         block2 = nn.Sequential(
             nn.ConvTranspose2d(2*DIM, DIM, 5),
-            nn.ReLU(True),
+            nn.LeakyReLU(True),
         )
         deconv_out = nn.ConvTranspose2d(DIM, 1, 8, stride=2)
 
@@ -145,13 +149,13 @@ class Discriminator(nn.Module):
         main = nn.Sequential(
             nn.Conv2d(1, DIM, 5, stride=2, padding=2),
             # nn.Linear(OUTPUT_DIM, 4*4*4*DIM),
-            nn.ReLU(True),
+            nn.LeakyReLU(True),
             nn.Conv2d(DIM, 2*DIM, 5, stride=2, padding=2),
             # nn.Linear(4*4*4*DIM, 4*4*4*DIM),
-            nn.ReLU(True),
+            nn.LeakyReLU(True),
             nn.Conv2d(2*DIM, 4*DIM, 5, stride=2, padding=2),
             # nn.Linear(4*4*4*DIM, 4*4*4*DIM),
-            nn.ReLU(True),
+            nn.LeakyReLU(True),
             # nn.Linear(4*4*4*DIM, 4*4*4*DIM),
             # nn.LeakyReLU(True),
             # nn.Linear(4*4*4*DIM, 4*4*4*DIM),
@@ -172,18 +176,18 @@ class Generator_CNN(nn.Module):
     def __init__(self, c=128):
         super(Generator_CNN, self).__init__()
         self.model = nn.Sequential(
-                nn.ConvTranspose2d(100, c*8, 2, 1, 0),
+                nn.ConvTranspose2d(128, c*8, 2, 1, 0),
                 nn.BatchNorm2d(c*8),
-                nn.ReLU(True),
+                nn.LeakyReLU(True),
                 nn.ConvTranspose2d(c*8, c*4, 4, 2, 1),
                 nn.BatchNorm2d(c*4),
-                nn.ReLU(True),
+                nn.LeakyReLU(True),
                 nn.ConvTranspose2d(c*4, c*2, 3, 2, 1),
                 nn.BatchNorm2d(c*2),
-                nn.ReLU(True),
+                nn.LeakyReLU(True),
                 nn.ConvTranspose2d(c*2, c, 4, 2, 1),
                 nn.BatchNorm2d(c),
-                nn.ReLU(True),
+                nn.LeakyReLU(True),
                 nn.ConvTranspose2d(c, 1, 4, 2, 1),
                 nn.Sigmoid(),
                 )
@@ -217,7 +221,7 @@ class Discriminator_CNN(nn.Module):
 
 
 # train ---------------------------------------------------------
-batch_size = 64
+batch_size = args.batch_size
 epochs = args.epoch
 
 train_data = MNIST('~/Project/data/mnist_data',
@@ -233,14 +237,14 @@ D = Discriminator()
 G.to(device)
 D.to(device)
 
-optimizer_G = optim.RMSprop(G.parameters(), lr=1e-5)
-optimizer_D = optim.RMSprop(D.parameters(), lr=1e-5)
+optimizer_G = optim.Adam(G.parameters(), lr=args.lr, betas=(0.9, 0.99))
+optimizer_D = optim.Adam(D.parameters(), lr=args.lr, betas=(0.9, 0.99))
 
 for epoch in range(epochs):
     Tloss_D = 0.0
     Tloss_G = 0.0
     for i, data in enumerate(train_loader, 0):
-        for j in range(5):
+        for j in range(args.d_train):
             optimizer_D.zero_grad()
             # real
             real = data[0].view(-1, 1, 28, 28)
@@ -261,13 +265,14 @@ for epoch in range(epochs):
 
             Tloss_D += loss_D
 
-        optimizer_G.zero_grad()
-        fake = G(z)
-        loss_G = - torch.mean(D(fake))
-        loss_G.backward()
-        optimizer_G.step()
+        if epoch >= args.g_start:
+            optimizer_G.zero_grad()
+            fake = G(z)
+            loss_G = - torch.mean(D(fake))
+            loss_G.backward()
+            optimizer_G.step()
 
-        Tloss_G += loss_G
+            Tloss_G += loss_G
 
         if i % cycle == 0:
             print('[%d, %6d] loss_G: %f loss_D: %f' %
@@ -275,6 +280,6 @@ for epoch in range(epochs):
             Tloss_D = 0.0
             Tloss_G = 0.0
 
-        z = torch.randn(batch_size, 128, device=device).view(-1, 128, 1, 1)
+        z = torch.randn(args.batch_size, 128, device=device).view(-1, 128, 1, 1)
         gen_imgs = G(z)
         save_image(gen_imgs.data[:25], 'images/images{}/{}.png'.format(args.img_dir, epoch), nrow=5, normalize=True)
